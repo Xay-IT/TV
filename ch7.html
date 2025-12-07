@@ -1,0 +1,51 @@
+<html>
+<head>
+<title>WANDERING OLDMAN AIS</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,shrink-to-fit=no">
+<link rel="stylesheet" type="text/css" href="/clap.css">
+<script src="//cdn.jsdelivr.net/npm/@clappr/player@0.4.0/dist/clappr.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/mux.js@5.6.7/dist/mux.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/level-selector@latest/dist/level-selector.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/clappr-chromecast-plugin@latest/dist/clappr-chromecast-plugin.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/clappr-pip@latest/dist/clappr-pip.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/clappr-playback-rate-plugin@latest/dist/clappr-playback-rate-plugin.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/shaka-player@2.5.10/dist/shaka-player.compiled.min.js"></script>
+<script src="//cdn.jsdelivr.net/gh/clappr/dash-shaka-playback@latest/dist/dash-shaka-playback.external.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/cdnbye-shaka@latest"></script>
+<style> 
+body {
+    background-color: #000000;
+}
+</style>
+</head>
+<div id="player"></div>
+<script>
+  var player = new Clappr.Player({
+          source: 'https://cco-streamer1.cdn.3bbtv.com:8443/3bb/live/35/35.mpd',
+          mimeType: 'application/dash+xml',
+          height: '100%',
+          width: '100%',
+          autoPlay: true,
+          plugins: [LevelSelector, DashShakaPlayback, Clappr.MediaControl],
+          events: {onReady: function() {var plugin = this.getPlugin('click_to_pause'); plugin && plugin.disable();},},
+          chromecast: {
+              preload: 'metadata',
+              contentType: 'video/mpd',
+          },
+          shakaConfiguration: {
+              drm: {
+              clearKeys: {
+					'4d4426a505f64382a9841155d721cee6':'0f4770219ccb4be5836a7517057e51c3'		
+                  }
+              },
+          },
+          shakaOnBeforeLoad: function (shaka_player) {},
+          parentId: '#player'
+      });
+	  
+  </script>
+    <span style='position:absolute;top:10px;right:20px;font-size: 15px; font-weight: bold;color: #ff0;'><em>ໄຊ</em></span>
+   <center>
+  <p><ins>Xay</ins></p>
+   </center>
+</html>
