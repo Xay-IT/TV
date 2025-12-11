@@ -24,7 +24,7 @@ body {
           source: 'https://cco-streamer1.cdn.3bbtv.com:8443/3bb/live/35/35.mpd',
           mimeType: 'application/dash+xml',
           height: 'auto',
-          width: '',
+          width: 'auto',
           autoPlay: true,
           plugins: [LevelSelector, DashShakaPlayback, Clappr.MediaControl],
           events: {onReady: function() {var plugin = this.getPlugin('click_to_pause'); plugin && plugin.disable();},},
@@ -46,6 +46,7 @@ body {
   </script>
     <span style='position:absolute;top:10px;left:20px;font-size: 15px; font-weight: bold;color: #ff0;'>ໄຊ</span>
 </html>
+
 
 
 
