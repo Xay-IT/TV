@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>CH3 HD Live Stream</title>
+    <title>CH3 HD Live Stream Test</title>
     <!-- 1. Viewport for responsive design (Mandatory) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 2. Tailwind CSS for modern styling (Mandatory) -->
@@ -34,7 +34,7 @@
 
     <!-- Channel Name Overlay -->
     <span class="absolute top-4 left-4 p-2 bg-red-700/80 text-white text-xl font-bold rounded-lg shadow-xl z-10 sm:top-6 sm:left-6">
-        ໄຊ Live HD
+        ໄຊ Live HD (ทดสอบ)
     </span>
 
     <!-- 3. Load Clappr and required HLS plugins - MOVED TO END OF BODY -->
@@ -50,25 +50,21 @@
         // Use a polling mechanism to ensure Clappr is defined before initialization
         
         function initializePlayer() {
-            // New Log: Confirm initialization function is running.
             console.log("Player initialization sequence started.");
             
+            // --- FIX/TEST: Using a known public test HLS stream URL ---
+            // The original stream (http://119.59.118.159/live/ch46/xxccxgd134/index.m3u8) may be offline or restricted.
+            // Using a test stream (Big Buck Bunny HLS) to verify player functionality.
+            const testSource = 'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8';
+            // --------------------------------------------------------
+
             // Configuration for the video player
             var player = new Clappr.Player({
-                // The HLS source URL (.m3u8)
-                source: 'http://119.59.118.159/live/ch46/xxccxgd134/index.m3u8',
-
-                // Set the correct MIME type for HLS
+                source: testSource,
                 mimeType: 'application/x-mpegURL',
-
-                // Player dimensions (100% of the container)
                 height: '100%',
                 width: '100%',
-
-                // Start playing automatically
                 autoPlay: true,
-                
-                // Keep LevelSelector and use HlsjsPlayback for reliable HLS streaming
                 plugins: [LevelSelector, HlsjsPlayback],
 
                 // Disable click-to-pause (optional, based on original request)
@@ -76,20 +72,17 @@
                     onReady: function() {
                         var plugin = this.getPlugin('click_to_pause');
                         plugin && plugin.disable();
-                        console.log("Clappr Player is Ready.");
+                        console.log("Clappr Player is Ready. Attempting to play test stream.");
                     },
                 },
 
                 // Configuration for the HlsjsPlayback plugin (optional but improves HLS stability)
                 playback: {
                     hlsjsConfig: {
-                        // Increase live latency for smoother playback (e.g., 5 seconds)
                         liveSyncDuration: 5,
                         enableWorker: true
                     }
                 },
-
-                // Point the player to the dedicated container ID
                 parentId: '#player-container'
             });
 
@@ -103,13 +96,13 @@
                             <svg class="w-12 h-12 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
                             <h2 class="text-2xl font-semibold mb-2">ข้อผิดพลาดในการเล่น (Playback Error)</h2>
                             <p class="text-center text-gray-400">
-                                วิดีโอไม่สามารถเล่นได้ สาเหตุอาจเกิดจาก:
-                                <ul class="list-disc list-inside mt-2 text-left">
-                                    <li>URL สตรีมอาจถูกยกเลิก (Offline)</li>
-                                    <li>การจำกัดการเข้าถึง (Geo-blocked)</li>
-                                    <li>ปัญหาเครือข่ายของผู้ใช้เอง</li>
+                                <span class="font-bold text-yellow-300">ถ้าคุณเห็นข้อความนี้ แสดงว่าแม้แต่สตรีมทดสอบก็เล่นไม่ได้ ซึ่งอาจเป็นปัญหาจากเบราว์เซอร์หรือเครือข่ายของคุณ.</span><br>
+                                สาเหตุหลัก:
+                                <ul class="list-disc list-inside mt-2 text-left mx-auto max-w-sm">
+                                    <li>URL สตรีมเดิมของคุณอาจถูกยกเลิก (Offline) หรือมีการจำกัดสิทธิ์.</li>
+                                    <li>ปัญหาเครือข่ายของผู้ใช้เอง.</li>
                                 </ul>
-                                ตรวจสอบให้แน่ใจว่า URL สตรีมยังใช้งานได้ครับ
+                                กรุณาลองใช้ URL สตรีมใหม่ที่เชื่อถือได้แทนครับ
                             </p>
                         </div>
                     `;
