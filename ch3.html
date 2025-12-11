@@ -1,130 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>CH3 HD Live Stream Test</title>
-    <!-- 1. Viewport for responsive design (Mandatory) -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 2. Tailwind CSS for modern styling (Mandatory) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Ensure the body and html take up full height/width */
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden; /* Prevent scrolling */
-        }
-        /* Style the player container to take up the full available space */
-        #player-container {
-            width: 100%;
-            height: 100vh; /* Viewport height */
-            background-color: #000;
-        }
-        /* Custom font for aesthetics */
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-    </style>
+<title>CH3 HD</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,shrink-to-fit=no">
+<!-- Tailwind CSS for basic styling and positioning -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Clappr and General Plugins -->
+<script src="//cdn.jsdelivr.net/npm/@clappr/player@0.4.0/dist/clappr.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/mux.js@5.6.7/dist/mux.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/level-selector@latest/dist/level-selector.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/clappr-chromecast-plugin@latest/dist/clappr-chromecast-plugin.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/clappr-pip@latest/dist/clappr-pip.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/clappr-playback-rate-plugin@latest/dist/clappr-playback-rate-plugin.min.js"></script>
+
+<!-- HLS Dependencies: Must include hls.js and the Clappr HLS plugin -->
+<script src="//cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/clappr-hlsjs-plugin@latest/dist/clappr-hlsjs-plugin.min.js"></script>
+
+<!-- DASH/Shaka-related scripts were REMOVED to prioritize HLS playback -->
+
+<style> 
+body {
+    background-color: #000000;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+}
+#player {
+    width: 100%;
+    height: 100%;
+}
+</style>
 </head>
-<body class="bg-gray-900">
+<body>
+<div id="player"></div>
 
-    <!-- Player container takes the full screen -->
-    <div id="player-container"></div>
+<!-- Dynamic Message Box for Status and Errors -->
+<div id="message-box" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 p-4 bg-gray-900/80 text-white rounded-lg shadow-xl" style="z-index: 20; display: none;">
+    กำลังโหลด...
+</div>
 
-    <!-- Channel Name Overlay -->
-    <span class="absolute top-4 left-4 p-2 bg-red-700/80 text-white text-xl font-bold rounded-lg shadow-xl z-10 sm:top-6 sm:left-6">
-        ໄຊ Live HD (ทดสอบ)
-    </span>
-
-    <!-- 3. Load Clappr and required HLS plugins - MOVED TO END OF BODY -->
-    <script src="//cdn.jsdelivr.net/npm/@clappr/player@0.4.0/dist/clappr.min.js"></script>
-    <!-- Use Hls.js library for robust HLS playback -->
-    <script src="//cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js"></script>
-    <!-- Clappr Hls.js plugin to integrate Hls.js into Clappr -->
-    <script src="//cdn.jsdelivr.net/npm/clappr-hlsjs-plugin@latest/dist/clappr-hlsjs-plugin.min.js"></script>
-    <!-- LevelSelector for quality switching in HLS -->
-    <script src="//cdn.jsdelivr.net/npm/level-selector@latest/dist/level-selector.min.js"></script>
-
-    <script>
-        // Use a polling mechanism to ensure Clappr is defined before initialization
+<script>
+    // --- Polling Mechanism to ensure HLS dependencies are loaded before initialization ---
+    function initializePlayer() {
+        const messageBox = document.getElementById('message-box');
         
-        function initializePlayer() {
-            console.log("Player initialization sequence started.");
+        // --- HLS Stream Configuration ---
+        // Using a reliable public HLS test stream to verify player functionality.
+        const hlsSource = 'http://119.59.118.159/live/ch46/xxccxgd134/index.m3u8'; 
+        // ถ้าต้องการใช้ URL เดิมของคุณ (อาจใช้งานไม่ได้): 'http://119.59.118.159/live/ch46/xxccxgd134/index.m3u8' 
+
+        var player = new Clappr.Player({
+            source: hlsSource,
+            mimeType: 'application/x-mpegURL', // MimeType for HLS
+            height: '100%',
+            width: '100%',
+            autoPlay: true,
             
-            // --- FIX/TEST: เปลี่ยนไปใช้ URL สตรีมทดสอบสาธารณะที่เชื่อถือได้อีกตัว ---
-            // The original stream (http://119.59.118.159/live/ch46/xxccxgd134/index.m3u8) may be offline or restricted.
-            // Using a reliable test stream (Mux HLS) to verify player functionality.
-            const testSource = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
-            // --------------------------------------------------------
-
-            // Configuration for the video player
-            var player = new Clappr.Player({
-                source: testSource,
-                mimeType: 'application/x-mpegURL',
-                height: '100%',
-                width: '100%',
-                autoPlay: true,
-                plugins: [LevelSelector, HlsjsPlayback],
-
-                // Disable click-to-pause (optional, based on original request)
-                events: {
-                    onReady: function() {
-                        var plugin = this.getPlugin('click_to_pause');
-                        plugin && plugin.disable();
-                        console.log("Clappr Player is Ready. Attempting to play test stream.");
-                    },
+            // Plugins: Using LevelSelector and HlsjsPlayback for HLS
+            plugins: [LevelSelector, HlsjsPlayback, Clappr.MediaControl, Clappr.ChromecastPlugin, Clappr.PipPlugin, Clappr.PlaybackRatePlugin],
+            
+            // User's events config
+            events: {
+                onReady: function() {
+                    var plugin = this.getPlugin('click_to_pause');
+                    plugin && plugin.disable();
+                    console.log("Clappr Player is Ready and HLS stream loaded.");
+                    messageBox.style.display = 'none'; // Hide message on success
                 },
+                onError: function(e) {
+                    console.error("Playback Error:", e);
+                    messageBox.style.display = 'block';
+                    messageBox.className = "absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 p-4 bg-red-800/90 text-white rounded-lg shadow-xl";
+                    messageBox.innerHTML = 'ไม่สามารถเล่นสตรีม HLS ได้ (อาจออฟไลน์, ถูกบล็อก, หรือมีปัญหา CORS). โปรดตรวจสอบ Console Log.';
+                }
+            },
+            
+            // Chromecast configuration updated for HLS
+            chromecast: {
+                preload: 'metadata',
+                contentType: 'application/x-mpegURL', // Updated for HLS
+            },
 
-                // Configuration for the HlsjsPlayback plugin (optional but improves HLS stability)
-                playback: {
-                    hlsjsConfig: {
-                        liveSyncDuration: 5,
-                        enableWorker: true
+            // --- DASH/DRM Configuration (REMOVED as requested for HLS) ---
+            /*
+            shakaConfiguration: {
+                drm: {
+                    clearKeys: {
+                        '4d4426a505f64382a9841155d721cee6': '0f4770219ccb4be5836a7517057e51c3' // Use this if you switch back to DASH/ClearKey
                     }
                 },
-                parentId: '#player-container'
-            });
+            },
+            shakaOnBeforeLoad: function (shaka_player) {},
+            */
+            // ------------------------------------------------------------------
 
-            // Note for the user if the stream fails to load due to external factors
-            player.on(Clappr.Events.PLAYBACK_ERROR, function(e) {
-                console.error("Playback error detected:", e);
-                const container = document.getElementById('player-container');
-                if (container) {
-                    container.innerHTML = `
-                        <div class="flex flex-col items-center justify-center h-full text-white p-6 bg-black">
-                            <svg class="w-12 h-12 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
-                            <h2 class="text-2xl font-semibold mb-2">ข้อผิดพลาดในการเล่น (Playback Error)</h2>
-                            <p class="text-center text-gray-400">
-                                <span class="font-bold text-yellow-300">สำคัญ: โปรดตรวจสอบ Console Log!</span><br>
-                                ถ้าสตรีมทดสอบนี้ยังจอดำ สาเหตุอาจเกิดจากข้อจำกัดของเบราว์เซอร์หรือเครือข่าย (เช่น CORS, Firewall)<br>
-                                สาเหตุหลัก:
-                                <ul class="list-disc list-inside mt-2 text-left mx-auto max-w-sm">
-                                    <li>URL สตรีมเดิมของคุณใช้ไม่ได้แล้ว.</li>
-                                    <li>เบราว์เซอร์/เครือข่ายบล็อกการโหลดไฟล์สตรีม.</li>
-                                </ul>
-                                กรุณาใช้ URL สตรีม Live HD ตัวใหม่ที่เชื่อถือได้ครับ
-                            </p>
-                        </div>
-                    `;
-                }
-            });
+            parentId: '#player'
+        });
+        
+        messageBox.style.display = 'block';
+        messageBox.innerHTML = 'กำลังโหลดสตรีม HLS...';
+    }
+
+    // Polling function to wait for all Clappr and plugins to be defined
+    function waitForClappr() {
+        // Check for Clappr, HlsjsPlayback, and LevelSelector
+        if (typeof Clappr !== 'undefined' && typeof HlsjsPlayback !== 'undefined' && typeof LevelSelector !== 'undefined') {
+            console.log("Clappr and required HLS plugins are defined. Initializing player.");
+            initializePlayer();
+        } else {
+            // Check again in 100 milliseconds
+            setTimeout(waitForClappr, 100);
         }
+    }
 
-        // Wait function using polling
-        function waitForClappr() {
-            // Check if Clappr and required plugins are defined globally
-            if (typeof Clappr !== 'undefined' && typeof LevelSelector !== 'undefined' && typeof HlsjsPlayback !== 'undefined') {
-                console.log("Clappr and plugins are defined. Starting player initialization.");
-                initializePlayer();
-            } else {
-                // If not defined, check again in 100 milliseconds
-                setTimeout(waitForClappr, 100);
-            }
-        }
-
-        // Start the wait process
-        waitForClappr();
-    </script>
+    // Start the wait process after the DOM is ready
+    document.addEventListener('DOMContentLoaded', waitForClappr);
+</script>
+    
+<span class="absolute top-4 left-4 p-1 bg-black/50 text-white text-lg font-bold rounded" style="z-index: 10;">
+    ໄຊ (HLS Mode)
+</span>
 </body>
 </html>
