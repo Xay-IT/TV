@@ -1,129 +1,95 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<title>CH3 HD</title>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,shrink-to-fit=no">
-<!-- Tailwind CSS for basic styling and positioning -->
-<script src="https://cdn.tailwindcss.com"></script>
-
-<!-- Clappr and General Plugins -->
-<script src="//cdn.jsdelivr.net/npm/@clappr/player@0.4.0/dist/clappr.min.js"></script>
-<script src="//cdn.jsdelivr.net/npm/mux.js@5.6.7/dist/mux.min.js"></script>
-<script src="//cdn.jsdelivr.net/npm/level-selector@latest/dist/level-selector.min.js"></script>
-<script src="//cdn.jsdelivr.net/npm/clappr-chromecast-plugin@latest/dist/clappr-chromecast-plugin.min.js"></script>
-<script src="//cdn.jsdelivr.net/npm/clappr-pip@latest/dist/clappr-pip.min.js"></script>
-<script src="//cdn.jsdelivr.net/npm/clappr-playback-rate-plugin@latest/dist/clappr-playback-rate-plugin.min.js"></script>
-
-<!-- HLS Dependencies: Must include hls.js and the Clappr HLS plugin -->
-<script src="//cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js"></script>
-<script src="//cdn.jsdelivr.net/npm/clappr-hlsjs-plugin@latest/dist/clappr-hlsjs-plugin.min.js"></script>
-
-<!-- DASH/Shaka-related scripts were REMOVED to prioritize HLS playback -->
-
-<style> 
-body {
-    background-color: #000000;
-    margin: 0;
-    padding: 0;
-    height: 100vh;
-    width: 100%;
-    overflow: hidden;
-    font-family: 'Inter', sans-serif;
-}
-#player {
-    width: 100%;
-    height: 100%;
-}
-</style>
+    <title>HLS Player Example</title>
+    <style>
+        /* จัดรูปแบบให้วิดีโอแสดงเต็มความกว้าง */
+        #video-container {
+            width: 80%;
+            margin: 0 auto;
+            padding-top: 20px;
+        }
+    </style>
 </head>
 <body>
-<div id="player"></div>
 
-<!-- Dynamic Message Box for Status and Errors -->
-<div id="message-box" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 p-4 bg-gray-900/80 text-white rounded-lg shadow-xl" style="z-index: 20; display: none;">
-    กำลังโหลด...
-</div>
+    <div id="video-container">
+        <video id="video" controls></video>
+    </div>
 
-<script>
-    // --- Polling Mechanism to ensure HLS dependencies are loaded before initialization ---
-    function initializePlayer() {
-        const messageBox = document.getElementById('message-box');
-        
-        // --- HLS Stream Configuration ---
-        // Using a reliable public HLS test stream to verify player functionality.
-        const hlsSource = 'http://119.59.118.159/live/ch46/xxccxgd134/index.m3u8'; 
-        // ถ้าต้องการใช้ URL เดิมของคุณ (อาจใช้งานไม่ได้): 'http://119.59.118.159/live/ch46/xxccxgd134/index.m3u8' 
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
-        var player = new Clappr.Player({
-            source: hlsSource,
-            mimeType: 'application/x-mpegURL', // MimeType for HLS
-            height: '100%',
-            width: '100%',
-            autoPlay: true,
+    <script>
+        // ลิงก์ที่คุณต้องการเล่น
+        var videoUrl = "http://119.59.118.159/live/ch46/xxccxgd134/index.m3u8";
+
+        // อ้างอิงถึงองค์ประกอบวิดีโอใน HTML
+        var video = document.getElementById('video');
+
+        // ตรวจสอบว่าเบราว์เซอร์รองรับ HLS ด้วยตัวเองหรือไม่ 
+        // (ส่วนใหญ่ Safari จะรองรับโดยไม่ต้องใช้ hls.js)
+        if (Hls.isSupported()) {
+            // 1. สร้างอินสแตนซ์ของ Hls.js
+            var hls = new Hls();
             
-            // Plugins: Using LevelSelector and HlsjsPlayback for HLS
-            plugins: [LevelSelector, HlsjsPlayback, Clappr.MediaControl, Clappr.ChromecastPlugin, Clappr.PipPlugin, Clappr.PlaybackRatePlugin],
+            // 2. ผูกอินสแตนซ์ hls.js เข้ากับองค์ประกอบวิดีโอ 
+            hls.attachMedia(video);
             
-            // User's events config
-            events: {
-                onReady: function() {
-                    var plugin = this.getPlugin('click_to_pause');
-                    plugin && plugin.disable();
-                    console.log("Clappr Player is Ready and HLS stream loaded.");
-                    messageBox.style.display = 'none'; // Hide message on success
-                },
-                onError: function(e) {
-                    console.error("Playback Error:", e);
-                    messageBox.style.display = 'block';
-                    messageBox.className = "absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 p-4 bg-red-800/90 text-white rounded-lg shadow-xl";
-                    messageBox.innerHTML = 'ไม่สามารถเล่นสตรีม HLS ได้ (อาจออฟไลน์, ถูกบล็อก, หรือมีปัญหา CORS). โปรดตรวจสอบ Console Log.';
-                }
-            },
-            
-            // Chromecast configuration updated for HLS
-            chromecast: {
-                preload: 'metadata',
-                contentType: 'application/x-mpegURL', // Updated for HLS
-            },
+            // 3. กำหนด Listener เมื่อ Hls.js พร้อมแล้ว 
+            hls.on(Hls.Events.MEDIA_ATTACHED, function () {
+                console.log("Media attached, loading source...");
+                
+                // 4. โหลดลิงก์ .m3u8 เข้าไป
+                hls.loadSource(videoUrl);
+                
+                hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
+                    console.log("Manifest parsed, quality levels:", data.levels.length);
+                    // สามารถเรียก video.play() ที่นี่ได้ หากต้องการให้เล่นอัตโนมัติ 
+                    // (แต่เบราว์เซอร์สมัยใหม่อาจบล็อกการเล่นอัตโนมัติหากไม่มีการโต้ตอบจากผู้ใช้)
+                    // video.play(); 
+                });
+            });
 
-            // --- DASH/DRM Configuration (REMOVED as requested for HLS) ---
-            /*
-            shakaConfiguration: {
-                drm: {
-                    clearKeys: {
-                        '4d4426a505f64382a9841155d721cee6': '0f4770219ccb4be5836a7517057e51c3' // Use this if you switch back to DASH/ClearKey
+            // การจัดการข้อผิดพลาด (สำคัญสำหรับการใช้งานจริง)
+            hls.on(Hls.Events.ERROR, function (event, data) {
+                var errorType = data.type;
+                var errorDetails = data.details;
+                var errorFatal = data.fatal;
+                
+                console.error("HLS Error:", errorDetails, "Type:", errorType, "Fatal:", errorFatal);
+
+                if (errorFatal) {
+                    // หากเป็นข้อผิดพลาดร้ายแรง อาจจะต้องลองโหลดใหม่
+                    switch (errorType) {
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            console.error("Fatal network error encountered, trying to recover...");
+                            hls.startLoad();
+                            break;
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            console.error("Fatal media error encountered, trying to recover...");
+                            hls.recoverMediaError();
+                            break;
+                        default:
+                            // ไม่สามารถกู้คืนได้, ทำลายอินสแตนซ์และแจ้งผู้ใช้
+                            hls.destroy();
+                            alert("Cannot play the stream due to a fatal error.");
+                            break;
                     }
-                },
-            },
-            shakaOnBeforeLoad: function (shaka_player) {},
-            */
-            // ------------------------------------------------------------------
+                }
+            });
 
-            parentId: '#player'
-        });
-        
-        messageBox.style.display = 'block';
-        messageBox.innerHTML = 'กำลังโหลดสตรีม HLS...';
-    }
-
-    // Polling function to wait for all Clappr and plugins to be defined
-    function waitForClappr() {
-        // Check for Clappr, HlsjsPlayback, and LevelSelector
-        if (typeof Clappr !== 'undefined' && typeof HlsjsPlayback !== 'undefined' && typeof LevelSelector !== 'undefined') {
-            console.log("Clappr and required HLS plugins are defined. Initializing player.");
-            initializePlayer();
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            // หากเบราว์เซอร์รองรับ HLS โดยตรง (เช่น Safari)
+            console.log("Browser supports HLS natively.");
+            video.src = videoUrl;
+            // video.addEventListener('loadedmetadata', function() {
+            //     video.play();
+            // });
         } else {
-            // Check again in 100 milliseconds
-            setTimeout(waitForClappr, 100);
+            // กรณีที่เบราว์เซอร์ไม่รองรับ HLS เลย (หายากมากในปัจจุบัน)
+            alert("Your browser does not support HLS streaming.");
         }
-    }
+    </script>
 
-    // Start the wait process after the DOM is ready
-    document.addEventListener('DOMContentLoaded', waitForClappr);
-</script>
-    
-<span class="absolute top-4 left-4 p-1 bg-black/50 text-white text-lg font-bold rounded" style="z-index: 10;">
-    ໄຊ (HLS Mode)
-</span>
 </body>
 </html>
