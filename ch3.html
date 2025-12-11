@@ -34,7 +34,7 @@
 
     <!-- Channel Name Overlay -->
     <span class="absolute top-4 left-4 p-2 bg-red-700/80 text-white text-xl font-bold rounded-lg shadow-xl z-10 sm:top-6 sm:left-6">
-        ໄຊ
+        ໄຊ Live HD
     </span>
 
     <!-- 3. Load Clappr and required HLS plugins - MOVED TO END OF BODY -->
@@ -50,6 +50,9 @@
         // Use a polling mechanism to ensure Clappr is defined before initialization
         
         function initializePlayer() {
+            // New Log: Confirm initialization function is running.
+            console.log("Player initialization sequence started.");
+            
             // Configuration for the video player
             var player = new Clappr.Player({
                 // The HLS source URL (.m3u8)
@@ -73,6 +76,7 @@
                     onReady: function() {
                         var plugin = this.getPlugin('click_to_pause');
                         plugin && plugin.disable();
+                        console.log("Clappr Player is Ready.");
                     },
                 },
 
@@ -117,7 +121,7 @@
         function waitForClappr() {
             // Check if Clappr and required plugins are defined globally
             if (typeof Clappr !== 'undefined' && typeof LevelSelector !== 'undefined' && typeof HlsjsPlayback !== 'undefined') {
-                console.log("Clappr and plugins are defined. Initializing player.");
+                console.log("Clappr and plugins are defined. Starting player initialization.");
                 initializePlayer();
             } else {
                 // If not defined, check again in 100 milliseconds
