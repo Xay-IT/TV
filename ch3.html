@@ -2,14 +2,14 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>HLS Player ลายน้ำสไตล์ใหม่ (15px, สีเหลือง)</title>
+    <title>HLS Player สำหรับมือถือ (AutoPlay Muted)</title>
     
     <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
     
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@700&display=swap" rel="stylesheet">
     
     <style>
-        /* ตั้งค่าพื้นฐานสำหรับ Full Screen */
+        /* [สไตล์ CSS ทั้งหมดเหมือนเดิม] */
         html, body {
             margin: 0;
             padding: 0;
@@ -18,34 +18,26 @@
             overflow: hidden;
             background-color: #000;
         }
-
-        /* Container ใช้พื้นที่เต็มหน้าจอและเป็น Reference สำหรับ Watermark */
         .video-container {
             width: 100%;
             height: 100%;
             position: relative; 
         }
-
-        /* Player Video.js ใช้พื้นที่เต็ม Container */
         .video-js {
             width: 100% !important;
             height: 100% !important;
         }
-
-        /* 3. สไตล์สำหรับลายน้ำ (Watermark) **ตามคำขอใหม่** */
+        /* สไตล์สำหรับลายน้ำ (Watermark) */
         .watermark {
             position: absolute;
             top: 10px;        /* 10px จากขอบบน */
             left: 20px;       /* 20px จากขอบซ้าย */
             z-index: 10; 
-            
             color: #ff0;      /* สีเหลืองสว่าง */
             font-size: 15px;  /* ขนาด 15px */
-            font-weight: bold; /* ความหนา Bold/700 */
-            
+            font-weight: bold; 
             font-family: 'Noto Sans Lao', sans-serif; 
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7); /* ลดเงาให้เหมาะกับขนาดเล็ก */
-            
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7); 
             pointer-events: none; 
             user-select: none; 
         }
@@ -65,6 +57,7 @@
             controls
             preload="auto"
             autoplay 
+            muted  
             data-setup="{}"
         >
             <source 
@@ -79,14 +72,39 @@
     </div>
 
     <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.12"></script>
 
     <script>
+        var video = document.getElementById('my-video');
         var player = videojs('my-video');
+        var hlsUrl = 'http://119.59.118.159/live/ch46/Mariogogo007/index.m3u8';
+
         player.on('ready', function() {
-            // พยายามเล่นทันทีโดยอัตโนมัติ (ไม่มีการปิดเสียง)
-            player.play().catch(function(error) {
-                console.log("Autoplay was blocked. User interaction is required.");
-            });
+            // ตรวจสอบว่าเบราว์เซอร์รองรับ Media Source Extensions (MSE) ซึ่งจำเป็นสำหรับ HLS.js หรือไม่
+            if (Hls.isSupported() && !player.hasClass('vjs-ios') && !player.hasClass('vjs-android')) {
+                var hls = new Hls();
+                hls.loadSource(hlsUrl);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    console.log("HLS.js loaded source.");
+                    // พยายามเล่นทันทีเมื่อ Manifest ถูกโหลด (โดยปิดเสียง)
+                    player.play().catch(function(error) {
+                        console.log("Autoplay blocked, user must interact.");
+                    });
+                });
+            } 
+            // สำหรับเบราว์เซอร์ที่รองรับ Native HLS (ส่วนใหญ่คือ iOS) หรือไม่รองรับ MSE
+            else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = hlsUrl;
+                console.log("Using Native HLS.");
+                player.play().catch(function(error) {
+                    console.log("Autoplay blocked, user must interact.");
+                });
+            } else {
+                 // กรณีที่เบราว์เซอร์ไม่รองรับเลย
+                console.error("Browser does not support HLS playback.");
+            }
         });
     </script>
 </body>
