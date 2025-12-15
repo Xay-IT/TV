@@ -1,95 +1,93 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-    <title>HLS Player Example</title>
+    <meta charset="UTF-8">
+    <title>HLS AutoPlay No Mute Player พร้อมลายน้ำ Noto Sans Lao</title>
+    
+    <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
+    
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@700&display=swap" rel="stylesheet">
+    
     <style>
-        /* จัดรูปแบบให้วิดีโอแสดงเต็มความกว้าง */
-        #video-container {
-            width: 80%;
-            margin: 0 auto;
-            padding-top: 20px;
+        /* ตั้งค่าพื้นฐานสำหรับ Full Screen */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        /* Container ใช้พื้นที่เต็มหน้าจอและเป็น Reference สำหรับ Watermark */
+        .video-container {
+            width: 100%;
+            height: 100%;
+            position: relative; 
+        }
+
+        /* Player Video.js ใช้พื้นที่เต็ม Container */
+        .video-js {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* 3. สไตล์สำหรับลายน้ำ (Watermark) พร้อมกำหนด Font Family */
+        .watermark {
+            position: absolute;
+            top: 20px; 
+            left: 20px; 
+            z-index: 10; 
+            color: rgba(255, 255, 255, 0.8); /* เพิ่มความสว่างเล็กน้อย */
+            font-size: 3.5em; /* ขยายขนาดให้อ่านง่ายขึ้น */
+            font-weight: 700; /* ใช้ความหนา 700 ที่เราเรียกเข้ามา */
+            
+            /* **กำหนด Font Family เป็น Noto Sans Lao** */
+            font-family: 'Noto Sans Lao', sans-serif; 
+            
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7); 
+            pointer-events: none; 
+            user-select: none; 
         }
     </style>
 </head>
 <body>
 
-    <div id="video-container">
-        <video id="video" controls></video>
+    <div class="video-container">
+        
+        <div class="watermark">
+            ໄຊ
+        </div>
+        
+        <video
+            id="my-video"
+            class="video-js vjs-default-skin vjs-big-play-centered"
+            controls
+            preload="auto"
+            autoplay 
+            data-setup="{}"
+        >
+            <source 
+                src="http://119.59.118.159/live/ch46/Mariogogo007/index.m3u8" 
+                type="application/x-mpegURL"
+            >
+            <p class="vjs-no-js">
+                หากวิดีโอไม่แสดง คุณอาจต้องอัพเกรดเบราว์เซอร์ของคุณ
+            </p>
+        </video>
+        
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
 
     <script>
-        // ลิงก์ที่คุณต้องการเล่น
-        var videoUrl = "http://119.59.118.159/live/ch46/xxccxgd134/index.m3u8";
-
-        // อ้างอิงถึงองค์ประกอบวิดีโอใน HTML
-        var video = document.getElementById('video');
-
-        // ตรวจสอบว่าเบราว์เซอร์รองรับ HLS ด้วยตัวเองหรือไม่ 
-        // (ส่วนใหญ่ Safari จะรองรับโดยไม่ต้องใช้ hls.js)
-        if (Hls.isSupported()) {
-            // 1. สร้างอินสแตนซ์ของ Hls.js
-            var hls = new Hls();
-            
-            // 2. ผูกอินสแตนซ์ hls.js เข้ากับองค์ประกอบวิดีโอ 
-            hls.attachMedia(video);
-            
-            // 3. กำหนด Listener เมื่อ Hls.js พร้อมแล้ว 
-            hls.on(Hls.Events.MEDIA_ATTACHED, function () {
-                console.log("Media attached, loading source...");
-                
-                // 4. โหลดลิงก์ .m3u8 เข้าไป
-                hls.loadSource(videoUrl);
-                
-                hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
-                    console.log("Manifest parsed, quality levels:", data.levels.length);
-                    // สามารถเรียก video.play() ที่นี่ได้ หากต้องการให้เล่นอัตโนมัติ 
-                    // (แต่เบราว์เซอร์สมัยใหม่อาจบล็อกการเล่นอัตโนมัติหากไม่มีการโต้ตอบจากผู้ใช้)
-                    // video.play(); 
-                });
+        var player = videojs('my-video');
+        player.on('ready', function() {
+            // พยายามเล่นทันทีโดยอัตโนมัติ (ไม่มีการปิดเสียง)
+            player.play().catch(function(error) {
+                console.log("Autoplay was blocked. User interaction is required.");
             });
-
-            // การจัดการข้อผิดพลาด (สำคัญสำหรับการใช้งานจริง)
-            hls.on(Hls.Events.ERROR, function (event, data) {
-                var errorType = data.type;
-                var errorDetails = data.details;
-                var errorFatal = data.fatal;
-                
-                console.error("HLS Error:", errorDetails, "Type:", errorType, "Fatal:", errorFatal);
-
-                if (errorFatal) {
-                    // หากเป็นข้อผิดพลาดร้ายแรง อาจจะต้องลองโหลดใหม่
-                    switch (errorType) {
-                        case Hls.ErrorTypes.NETWORK_ERROR:
-                            console.error("Fatal network error encountered, trying to recover...");
-                            hls.startLoad();
-                            break;
-                        case Hls.ErrorTypes.MEDIA_ERROR:
-                            console.error("Fatal media error encountered, trying to recover...");
-                            hls.recoverMediaError();
-                            break;
-                        default:
-                            // ไม่สามารถกู้คืนได้, ทำลายอินสแตนซ์และแจ้งผู้ใช้
-                            hls.destroy();
-                            alert("Cannot play the stream due to a fatal error.");
-                            break;
-                    }
-                }
-            });
-
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            // หากเบราว์เซอร์รองรับ HLS โดยตรง (เช่น Safari)
-            console.log("Browser supports HLS natively.");
-            video.src = videoUrl;
-            // video.addEventListener('loadedmetadata', function() {
-            //     video.play();
-            // });
-        } else {
-            // กรณีที่เบราว์เซอร์ไม่รองรับ HLS เลย (หายากมากในปัจจุบัน)
-            alert("Your browser does not support HLS streaming.");
-        }
+        });
     </script>
-
 </body>
 </html>
