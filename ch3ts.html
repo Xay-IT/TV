@@ -6,13 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no">
     
     <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest/dist/mpegts.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@clappr/player@0.4.0/dist/clappr.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/level-selector@latest/dist/level-selector.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/clappr-pip@latest/dist/clappr-pip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/clappr-playback-rate-plugin@latest/dist/clappr-playback-rate-plugin.min.js"></script>
-    <!-- โหลด HLS.js และ Clappr HLS Plugin -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/clappr-hlsjs-playback@latest/dist/clappr-hlsjs-playback.min.js"></script>
 
     <style>
         body, html {
@@ -22,6 +20,9 @@
             height: 100%;
             background-color: #000;
             overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         #player {
             width: 100vw;
@@ -31,52 +32,74 @@
             width: 100% !important;
             height: 100% !important;
         }
+        #status-overlay {
+            display: none;
+            color: #fff;
+            text-align: center;
+            font-family: sans-serif;
+            position: absolute;
+            z-index: 100;
+            background: rgba(0,0,0,0.8);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #333;
+        }
     </style>
 </head>
 <body>
+    <div id="status-overlay">
+        <p id="status-text">กำลังโหลดสตรีมโดยตรงจากเซิร์ฟเวอร์...</p>
+        <p style="font-size: 0.8em; color: #888;">(กรุณาตรวจสอบว่า Server ตั้งค่า CORS Header เรียบร้อยแล้ว)</p>
+    </div>
     <div id="player"></div>
 
     <script>
-        // ไฟล์ .ts โดยตรงมักมีปัญหา CORS และ Codec บนเบราว์เซอร์
-        var videoUrl = 'http://43.229.79.245:8080/live/premier/reimerp/20.ts';
+        /** * หลังจากตั้งค่า Server ให้ส่ง Header: Access-Control-Allow-Origin: * แล้ว
+         * เราสามารถเรียกใช้ URL ตรงได้ทันทีโดยไม่ต้องผ่าน Proxy
+         */
+        var originalUrl = 'http://43.229.79.245:8080/live/premier/reimerp/20.ts';
 
-        // ฟังก์ชันตรวจสอบและดึงปลั๊กอินที่ใช้งานได้จริงเพื่อป้องกัน TypeError
         function getPlugins() {
             var p = [];
-            if (window.HlsjsPlayback) p.push(window.HlsjsPlayback);
-            else if (window.ClapprHlsjsPlayback) p.push(window.ClapprHlsjsPlayback);
-            
             if (window.LevelSelector) p.push(window.LevelSelector);
             if (window.Clappr && window.Clappr.PIPPlugin) p.push(window.Clappr.PIPPlugin);
             if (window.Clappr && window.Clappr.PlaybackRatePlugin) p.push(window.Clappr.PlaybackRatePlugin);
-            
             return p;
         }
 
-        var player = new Clappr.Player({
-            source: videoUrl,
-            // สำหรับ .ts แนะนำให้ใช้ video/mp2t หรือปล่อยให้ Clappr ตัดสินใจเอง
-            // หากใช้ application/x-mpegURL ต้องมั่นใจว่าไฟล์เป็นโครงสร้าง HLS
-            mimeType: 'video/mp2t', 
-            height: '100%',
-            width: '100%',
-            autoPlay: true,
-            muted: true,
-            plugins: getPlugins(),
-            parentId: '#player',
-            hlsjsConfig: {
-                enableWorker: true,
-            },
-            events: {
-                onReady: function() {
-                    var plugin = this.getPlugin('click_to_pause');
-                    if (plugin) plugin.disable();
+        function createPlayer(sourceUrl) {
+            document.getElementById('status-overlay').style.display = 'block';
+            
+            return new Clappr.Player({
+                source: sourceUrl,
+                mimeType: 'video/mp2t',
+                height: '100%',
+                width: '100%',
+                autoPlay: true,
+                muted: true, // เพิ่มโอกาสในการ Autoplay สำเร็จ
+                plugins: getPlugins(),
+                parentId: '#player',
+                playback: {
+                    crossOrigin: 'anonymous', // สำคัญมาก: ต้องส่ง request แบบมี CORS mode
                 },
-                onError: function(e) {
-                    console.error('Player Error:', e);
+                events: {
+                    onReady: function() {
+                        var plugin = this.getPlugin('click_to_pause');
+                        if (plugin) plugin.disable();
+                        document.getElementById('status-overlay').style.display = 'none';
+                        console.log('Player is ready with Direct Stream');
+                    },
+                    onError: function(e) {
+                        console.error('Direct Stream Error:', e);
+                        document.getElementById('status-overlay').style.display = 'block';
+                        document.getElementById('status-text').innerText = 'เกิดข้อผิดพลาดในการโหลด (ตรวจสอบ CORS หรือสถานะ Server)';
+                    }
                 }
-            }
-        });
+            });
+        }
+
+        // สร้าง Player โดยใช้ลิงก์ตรง
+        var player = createPlayer(originalUrl);
     </script>
 </body>
 </html>
