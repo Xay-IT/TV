@@ -5,11 +5,13 @@
     <title>CH3 HD</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no">
     
-    <!-- Scripts: เพิ่ม HLS Playback เพื่อรองรับไฟล์ .ts / .m3u8 ได้ดีขึ้น -->
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@clappr/player@0.4.0/dist/clappr.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/level-selector@latest/dist/level-selector.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/clappr-pip@latest/dist/clappr-pip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/clappr-playback-rate-plugin@latest/dist/clappr-playback-rate-plugin.min.js"></script>
+    <!-- โหลด HLS.js และ Clappr HLS Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/clappr-hlsjs-playback@latest/dist/clappr-hlsjs-playback.min.js"></script>
 
     <style>
@@ -35,32 +37,35 @@
     <div id="player"></div>
 
     <script>
-        /**
-         * สาเหตุของจอดำที่เป็นไปได้:
-         * 1. Mixed Content: หากเว็บนี้รันบน https:// แต่ URL วิดีโอเป็น http:// เบราว์เซอร์จะบล็อก
-         * 2. Codec: ไฟล์ .ts บางประเภทเบราว์เซอร์ไม่รองรับการถอดรหัสโดยตรง
-         * 3. Source Offline: ลิงก์ต้นทางอาจจะปิดอยู่หรือจำกัด IP
-         */
+        // ไฟล์ .ts โดยตรงมักมีปัญหา CORS และ Codec บนเบราว์เซอร์
         var videoUrl = 'http://43.229.79.245:8080/live/premier/reimerp/20.ts';
+
+        // ฟังก์ชันตรวจสอบและดึงปลั๊กอินที่ใช้งานได้จริงเพื่อป้องกัน TypeError
+        function getPlugins() {
+            var p = [];
+            if (window.HlsjsPlayback) p.push(window.HlsjsPlayback);
+            else if (window.ClapprHlsjsPlayback) p.push(window.ClapprHlsjsPlayback);
+            
+            if (window.LevelSelector) p.push(window.LevelSelector);
+            if (window.Clappr && window.Clappr.PIPPlugin) p.push(window.Clappr.PIPPlugin);
+            if (window.Clappr && window.Clappr.PlaybackRatePlugin) p.push(window.Clappr.PlaybackRatePlugin);
+            
+            return p;
+        }
 
         var player = new Clappr.Player({
             source: videoUrl,
-            // พยายามบังคับให้ใช้ HLS Playback หรือถอดรหัส MPEG-TS
-            mimeType: 'application/x-mpegURL', 
+            // สำหรับ .ts แนะนำให้ใช้ video/mp2t หรือปล่อยให้ Clappr ตัดสินใจเอง
+            // หากใช้ application/x-mpegURL ต้องมั่นใจว่าไฟล์เป็นโครงสร้าง HLS
+            mimeType: 'video/mp2t', 
             height: '100%',
             width: '100%',
             autoPlay: true,
-            muted: true, // Chrome บล็อกวิดีโอที่มีเสียงไม่ให้เล่นเอง
-            plugins: [
-                HlsjsPlayback, 
-                LevelSelector, 
-                Clappr.PIPPlugin, 
-                Clappr.PlaybackRatePlugin
-            ],
+            muted: true,
+            plugins: getPlugins(),
             parentId: '#player',
             hlsjsConfig: {
                 enableWorker: true,
-                lowLatencyMode: true,
             },
             events: {
                 onReady: function() {
@@ -69,7 +74,6 @@
                 },
                 onError: function(e) {
                     console.error('Player Error:', e);
-                    // ถ้าจอดำ อาจเกิดจาก Error ตรงนี้
                 }
             }
         });
