@@ -1,40 +1,82 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>CH3</title>
-  <!-- โหลดไลบรารี mpegts.js เพื่อเล่น TS stream -->
+  <title>TS Player</title>
   <script src="https://cdn.jsdelivr.net/npm/mpegts.js/dist/mpegts.min.js"></script>
   <style>
-    body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
-    video { width: 100%; height: 100%; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: black;
+      width: 100%;
+      height: 100%;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+    }
   </style>
 </head>
 <body>
 
-  <video id="videoElement" controls autoplay muted></video>
+<video id="video" controls autoplay muted></video>
 
-  <script>
-    // ตรวจสอบว่าเบราว์เซอร์รองรับ MSE สำหรับ live playback หรือไม่
-    if (mpegts.getFeatureList().mseLivePlayback) {
-      const videoElement = document.getElementById('videoElement');
+<script>
+  if (mpegts.getFeatureList().mseLivePlayback) {
+    const player = mpegts.createPlayer({
+      type: 'mse',
+      isLive: true,
+      url: 'http://43.229.79.245:8080/live/premier/reimerp/20.ts'
+    });
+    player.attachMediaElement(document.getElementById('video'));
+    player.load();
+    player.play();
+  } else {
+    alert('Browser ไม่รองรับ');
+  }
+</script>
 
-      // สร้าง player โดยชี้ไปที่ลิงก์ .ts ของคุณ
-      const player = mpegts.createPlayer({
-        type: 'mse',
-        isLive: true,
-        url: 'http://43.229.79.245:8080/live/premier/reimerp/20.ts'
-      });
-
-      // ต่อ video element และเริ่มโหลด/เล่น
-      player.attachMediaElement(videoElement);
-      player.load();
-      player.play();
-    } else {
-      console.error('Browser does not support MSE live playback');
-      alert('เบราว์เซอร์ของคุณไม่รองรับการเล่นแบบ live TS stream');
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>TS Player</title>
+  <script src="https://cdn.jsdelivr.net/npm/mpegts.js/dist/mpegts.min.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: black;
+      width: 100%;
+      height: 100%;
     }
-  </script>
+    video {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+
+<video id="video" controls autoplay muted></video>
+
+<script>
+  if (mpegts.getFeatureList().mseLivePlayback) {
+    const player = mpegts.createPlayer({
+      type: 'mse',
+      isLive: true,
+      url: 'http://43.229.79.245:8080/live/premier/reimerp/20.ts'
+    });
+    player.attachMediaElement(document.getElementById('video'));
+    player.load();
+    player.play();
+  } else {
+    alert('Browser ไม่รองรับ');
+  }
+</script>
 
 </body>
 </html>
