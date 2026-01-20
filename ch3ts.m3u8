@@ -3,5 +3,5 @@
 #EXT-X-TARGETDURATION:10
 #EXT-X-MEDIA-SEQUENCE:0
 #EXTINF:10.0,
-http://43.229.79.245:8080/live/premier/reimerp/20.ts
+http://49.0.64.96:8007/HiSports
 #EXT-X-ENDLIST
