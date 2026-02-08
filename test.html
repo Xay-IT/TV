@@ -1,24 +1,60 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+  <head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.7.0/dist/controls.css">
     <style>
-        body { background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .video-js { width: 800px; height: 450px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+      body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
+      #video-container { width: 800px; height: 450px; }
+      video { width: 100%; height: 100%; }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <div data-shaka-player-container id="video-container">
+      <video autoplay id="video" style="width:100%;height:100%"></video>
+    </div>
 
-    <video
-        id="my-video"
-        class="video-js vjs-big-play-centered"
-        controls
-        preload="auto"
-        data-setup='{}'>
-        <source src="http://49.0.64.96:8007/HiSports" type="application/x-mpegURL">
-        <p class="vjs-no-js">To view this video please enable JavaScript.</p>
-    </video>
+    <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.0/dist/shaka-player.ui.js"></script>
+    
+    <script>
+      const manifestUri = 'http://49.0.64.96:8007/HiSports';
 
-    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
-</body>
+      async function initApp() {
+        // Install built-in polyfills
+        shaka.polyfill.installAll();
+
+        // Check browser support
+        if (shaka.Player.isBrowserSupported()) {
+          initPlayer();
+        } else {
+          console.error('Browser not supported!');
+        }
+      }
+
+      async function initPlayer() {
+        const video = document.getElementById('video');
+        const ui = video['ui'];
+        const player = new shaka.Player(video);
+
+        // Attach player to window for debugging
+        window.player = player;
+        window.ui = ui;
+
+        // Listen for errors
+        player.addEventListener('error', (event) => {
+          console.error('Error code', event.detail.code, 'object', event.detail);
+        });
+
+        try {
+          // Load the stream
+          await player.load(manifestUri);
+          console.log('The video has now been loaded!');
+        } catch (e) {
+          console.error('Error loading stream', e);
+        }
+      }
+
+      document.addEventListener('shaka-ui-loaded', initApp);
+      document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+  </body>
 </html>
