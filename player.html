@@ -1,500 +1,89 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CH3 HD Player</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
+<title>CH3 HD - Live Player</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,shrink-to-fit=no">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap');
-
-  :root {
-    --bg: #0a0a0f;
-    --surface: #111118;
-    --border: #1e1e2e;
-    --accent: #e63946;
-    --accent2: #ff6b6b;
-    --text: #e8e8f0;
-    --muted: #5a5a7a;
-    --glow: rgba(230,57,70,0.25);
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Sarabun', sans-serif;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
-
-  .player-shell {
-    width: 100%;
-    max-width: 900px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 0 60px rgba(0,0,0,0.6), 0 0 20px var(--glow);
-  }
-
-  /* Header */
-  .player-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 18px;
-    border-bottom: 1px solid var(--border);
-    background: linear-gradient(90deg, #0f0f1a, #12121f);
-  }
-
-  .channel-logo {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    object-fit: cover;
-    border: 1px solid var(--border);
-  }
-
-  .channel-info h2 {
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-  }
-
-  .channel-info span {
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-
-  .live-badge {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(230,57,70,0.15);
-    border: 1px solid rgba(230,57,70,0.4);
-    border-radius: 20px;
-    padding: 4px 12px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--accent2);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-
-  .live-dot {
-    width: 7px;
-    height: 7px;
-    background: var(--accent);
-    border-radius: 50%;
-    animation: pulse 1.5s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.8); }
-  }
-
-  /* Video Wrapper */
-  .video-wrap {
-    position: relative;
-    background: #000;
-    aspect-ratio: 16/9;
-    cursor: pointer;
-  }
-
-  video {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-
-  /* Overlay (click to play/pause) */
-  .overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.2s;
-    background: rgba(0,0,0,0.35);
-    pointer-events: none;
-  }
-
-  .overlay.show { opacity: 1; }
-
-  .play-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: rgba(230,57,70,0.85);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 30px var(--glow);
-  }
-
-  .play-icon svg { width: 26px; height: 26px; fill: white; }
-
-  /* Loading spinner */
-  .spinner {
-    position: absolute;
-    inset: 0;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0,0,0,0.5);
-  }
-
-  .spinner.active { display: flex; }
-
-  .spin-ring {
-    width: 44px;
-    height: 44px;
-    border: 3px solid rgba(255,255,255,0.1);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* Controls */
-  .controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 16px;
-    border-top: 1px solid var(--border);
-    background: #0d0d16;
-  }
-
-  .ctrl-btn {
-    background: none;
-    border: none;
-    color: var(--text);
-    cursor: pointer;
-    padding: 6px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s, color 0.15s;
-  }
-
-  .ctrl-btn:hover { background: rgba(255,255,255,0.07); color: white; }
-  .ctrl-btn svg { width: 20px; height: 20px; }
-
-  .vol-wrap {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  input[type=range] {
-    -webkit-appearance: none;
-    width: 80px;
-    height: 3px;
-    background: var(--border);
-    border-radius: 3px;
-    outline: none;
-    cursor: pointer;
-  }
-
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 13px;
-    height: 13px;
-    border-radius: 50%;
-    background: var(--accent);
-    cursor: pointer;
-    transition: transform 0.15s;
-  }
-
-  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.3); }
-
-  .status-text {
-    margin-left: auto;
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: 0.5px;
-  }
-
-  /* URL Input area */
-  .url-area {
-    padding: 12px 16px;
-    border-top: 1px solid var(--border);
-    background: #0a0a14;
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .url-input {
-    flex: 1;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 12px;
-    color: var(--text);
-    font-family: 'Sarabun', monospace;
-    font-size: 12px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  .url-input:focus { border-color: var(--accent); }
-
-  .load-btn {
-    background: var(--accent);
-    border: none;
-    color: white;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-family: 'Sarabun', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
-    white-space: nowrap;
-  }
-
-  .load-btn:hover { background: var(--accent2); transform: scale(1.02); }
-  .load-btn:active { transform: scale(0.98); }
-
-  /* Error */
-  .error-box {
-    display: none;
-    margin: 0 16px 12px;
-    padding: 10px 14px;
-    background: rgba(230,57,70,0.1);
-    border: 1px solid rgba(230,57,70,0.3);
-    border-radius: 8px;
-    font-size: 12px;
-    color: var(--accent2);
-  }
-
-  .error-box.show { display: block; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { background: #000; width: 100%; height: 100%; overflow: hidden; }
+#player { width: 100%; height: 100vh; }
+#msg {
+    color: #fff; font-family: sans-serif; font-size: 14px;
+    padding: 20px; display: none; line-height: 1.8;
+}
 </style>
 </head>
 <body>
 
-<div class="player-shell">
+<div id="player"></div>
+<div id="msg"></div>
 
-  <!-- Header -->
-  <div class="player-header">
-    <img class="channel-logo"
-      src="https://gigatv.3bbtv.co.th/wp-content/themes/changwattana/assets/channel/33.png"
-      onerror="this.style.display='none'"
-      alt="CH3">
-    <div class="channel-info">
-      <h2>CH3 HD</h2>
-      <span>Digital TV · 720p</span>
-    </div>
-    <div class="live-badge">
-      <span class="live-dot"></span> Live
-    </div>
-  </div>
-
-  <!-- Video -->
-  <div class="video-wrap" id="videoWrap" onclick="togglePlay()">
-    <video id="vid" autoplay playsinline></video>
-    <div class="spinner" id="spinner"><div class="spin-ring"></div></div>
-    <div class="overlay" id="overlay">
-      <div class="play-icon">
-        <svg id="overlayIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-      </div>
-    </div>
-  </div>
-
-  <!-- Controls -->
-  <div class="controls">
-    <!-- Play/Pause -->
-    <button class="ctrl-btn" onclick="togglePlay()" title="Play/Pause">
-      <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-      </svg>
-    </button>
-
-    <!-- Volume -->
-    <div class="vol-wrap">
-      <button class="ctrl-btn" onclick="toggleMute()" title="Mute">
-        <svg id="volIcon" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-        </svg>
-      </button>
-      <input type="range" id="volSlider" min="0" max="1" step="0.05" value="1" oninput="setVolume(this.value)">
-    </div>
-
-    <!-- Reload -->
-    <button class="ctrl-btn" onclick="reloadStream()" title="Reload Stream">
-      <svg viewBox="0 0 24 24" fill="currentColor">
-        <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-      </svg>
-    </button>
-
-    <!-- Fullscreen -->
-    <button class="ctrl-btn" onclick="goFullscreen()" title="Fullscreen">
-      <svg viewBox="0 0 24 24" fill="currentColor">
-        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
-      </svg>
-    </button>
-
-    <span class="status-text" id="statusText">กำลังโหลด...</span>
-  </div>
-
-  <!-- URL Input -->
-  <div class="url-area">
-    <input class="url-input" id="urlInput"
-      type="text"
-      value="https://www.livedoomovies.com:4431/02_3HD_720p/playlist.m3u8"
-      placeholder="ใส่ URL สตรีม .m3u8 หรือ HLS ที่นี่">
-    <button class="load-btn" onclick="loadStream()">▶ โหลด</button>
-  </div>
-
-  <div class="error-box" id="errorBox"></div>
-
-</div>
+<!--
+  วิธีที่ 1: วางไฟล์ clappr.min.js ไว้ในโฟลเดอร์เดียวกับ HTML นี้
+  ดาวน์โหลดได้ที่: https://cdn.jsdelivr.net/npm/@clappr/player@0.3.6/dist/clappr.min.js
+-->
+<script src="clappr.min.js"></script>
 
 <script>
-const vid = document.getElementById('vid');
-const spinner = document.getElementById('spinner');
-const overlay = document.getElementById('overlay');
-const overlayIcon = document.getElementById('overlayIcon');
-const playIcon = document.getElementById('playIcon');
-const statusText = document.getElementById('statusText');
-const errorBox = document.getElementById('errorBox');
-const volSlider = document.getElementById('volSlider');
+  if (typeof Clappr === 'undefined') {
+      // วิธีที่ 2: โหลดผ่าน script tag แบบ dynamic เพื่อลอง CDN อื่น
+      var cdnList = [
+          'https://cdn.jsdelivr.net/npm/@clappr/player@0.3.6/dist/clappr.min.js',
+          'https://unpkg.com/@clappr/player@0.3.6/dist/clappr.min.js',
+          'https://cdnjs.cloudflare.com/ajax/libs/clappr/0.3.6/clappr.min.js'
+      ];
 
-let hls = null;
-let overlayTimer = null;
+      var tried = 0;
 
-const PAUSE_PATH = 'M6 19h4V5H6v14zm8-14v14h4V5h-4z';
-const PLAY_PATH  = 'M8 5v14l11-7z';
-
-function showError(msg) {
-  errorBox.textContent = msg;
-  errorBox.classList.add('show');
-  statusText.textContent = 'เกิดข้อผิดพลาด';
-}
-
-function hideError() {
-  errorBox.classList.remove('show');
-}
-
-function loadStream(url) {
-  url = url || document.getElementById('urlInput').value.trim();
-  if (!url) return;
-  hideError();
-  statusText.textContent = 'กำลังเชื่อมต่อ...';
-  spinner.classList.add('active');
-
-  if (hls) { hls.destroy(); hls = null; }
-
-  if (Hls.isSupported()) {
-    hls = new Hls({
-      xhrSetup: function(xhr) {
-        xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Linux; Android 7.1.2; TV BOX Build/NHG47L) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36');
+      function tryLoad() {
+          if (tried >= cdnList.length) {
+              document.getElementById('msg').style.display = 'block';
+              document.getElementById('msg').innerHTML =
+                  '❌ โหลด Clappr ไม่ได้จากทุก CDN<br><br>' +
+                  'กรุณาดาวน์โหลดไฟล์นี้แล้ววางไว้ในโฟลเดอร์เดียวกับ HTML:<br>' +
+                  '<a href="https://cdn.jsdelivr.net/npm/@clappr/player@0.3.6/dist/clappr.min.js" ' +
+                  'style="color:#4af">clappr.min.js</a>';
+              return;
+          }
+          var s = document.createElement('script');
+          s.src = cdnList[tried++];
+          s.onload = initPlayer;
+          s.onerror = tryLoad;
+          document.head.appendChild(s);
       }
-    });
-    hls.loadSource(url);
-    hls.attachMedia(vid);
 
-    hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      vid.play().catch(() => {});
-      spinner.classList.remove('active');
-      statusText.textContent = 'กำลังออกอากาศสด';
-    });
-
-    hls.on(Hls.Events.ERROR, (e, data) => {
-      if (data.fatal) {
-        spinner.classList.remove('active');
-        showError('ไม่สามารถโหลดสตรีมได้ กรุณาตรวจสอบ URL หรือลองใหม่อีกครั้ง');
-      }
-    });
-  } else if (vid.canPlayType('application/vnd.apple.mpegurl')) {
-    vid.src = url;
-    vid.addEventListener('loadedmetadata', () => {
-      vid.play().catch(() => {});
-      spinner.classList.remove('active');
-      statusText.textContent = 'กำลังออกอากาศสด';
-    });
+      tryLoad();
   } else {
-    showError('เบราว์เซอร์นี้ไม่รองรับ HLS');
-    spinner.classList.remove('active');
+      initPlayer();
   }
-}
 
-function togglePlay() {
-  if (vid.paused) {
-    vid.play();
-    playIcon.querySelector ? null : null;
-    playIcon.setAttribute('d', PAUSE_PATH);
-    showOverlay(false);
-  } else {
-    vid.pause();
-    showOverlay(true);
+  function initPlayer() {
+      if (typeof Clappr === 'undefined') return;
+
+      new Clappr.Player({
+          source: 'https://www.livedoomovies.com:4431/02_3HD_720p/playlist.m3u8',
+          mimeType: 'application/x-mpegURL',
+          height: '100%',
+          width: '100%',
+          autoPlay: true,
+          events: {
+              onReady: function() {
+                  var p = this.getPlugin('click_to_pause');
+                  p && p.disable();
+              }
+          },
+          hlsjsConfig: {
+              xhrSetup: function(xhr) {
+                  xhr.setRequestHeader(
+                      'User-Agent',
+                      'Mozilla/5.0 (Linux; Android 7.1.2; TV BOX Build/NHG47L) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36'
+                  );
+              }
+          },
+          parentId: '#player'
+      });
   }
-  updatePlayIcon();
-}
-
-function updatePlayIcon() {
-  const path = vid.paused ? PLAY_PATH : PAUSE_PATH;
-  playIcon.innerHTML = `<path d="${path}"/>`;
-  overlayIcon.innerHTML = `<path d="${vid.paused ? PLAY_PATH : PAUSE_PATH}"/>`;
-}
-
-function showOverlay(stay) {
-  overlay.classList.add('show');
-  clearTimeout(overlayTimer);
-  if (!stay) {
-    overlayTimer = setTimeout(() => overlay.classList.remove('show'), 800);
-  }
-}
-
-function toggleMute() {
-  vid.muted = !vid.muted;
-  const volIcon = document.getElementById('volIcon');
-  if (vid.muted) {
-    volIcon.innerHTML = `<path d="M16.5 12A4.5 4.5 0 0 0 14 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06A8.99 8.99 0 0 0 17.73 18l1.73 1.73L21 18.46 4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>`;
-  } else {
-    volIcon.innerHTML = `<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>`;
-  }
-}
-
-function setVolume(v) {
-  vid.volume = v;
-  vid.muted = (v == 0);
-}
-
-function reloadStream() {
-  loadStream();
-}
-
-function goFullscreen() {
-  const wrap = document.getElementById('videoWrap');
-  if (document.fullscreenElement) {
-    document.exitFullscreen();
-  } else {
-    wrap.requestFullscreen && wrap.requestFullscreen();
-  }
-}
-
-vid.addEventListener('waiting', () => spinner.classList.add('active'));
-vid.addEventListener('playing', () => { spinner.classList.remove('active'); updatePlayIcon(); });
-vid.addEventListener('pause', updatePlayIcon);
-vid.addEventListener('play', updatePlayIcon);
-
-// Auto-load on start
-window.addEventListener('DOMContentLoaded', () => loadStream());
 </script>
+
 </body>
 </html>
