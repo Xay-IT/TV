@@ -1,9 +1,47 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>("-")</title>
+<title>CH3 HD</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,shrink-to-fit=no">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { background: #000; width: 100%; height: 100%; overflow: hidden; }
+#player { width: 100%; height: 100vh; }
+</style>
 </head>
 <body>
+<div id="player"></div>
+<script>
+  // ✏️ เปลี่ยน WORKER_URL เป็น URL ของคุณหลัง deploy worker
+  // ตัวอย่าง: https://ch3.yourname.workers.dev
+  var WORKER_URL = 'https://ch3hd.xay-it.workers.dev';
 
+  function loadScript(src, cb) {
+    var s = document.createElement('script');
+    s.src = src;
+    s.onload = cb;
+    document.head.appendChild(s);
+  }
+
+  loadScript('https://cdn.jsdelivr.net/npm/@clappr/player@0.3.6/dist/clappr.min.js', function() {
+    loadScript('https://cdn.jsdelivr.net/npm/level-selector@0.0.14/dist/level-selector.min.js', function() {
+      new Clappr.Player({
+        source: WORKER_URL + '/stream/02_3HD_720p/playlist.m3u8',
+        mimeType: 'application/x-mpegURL',
+        height: '100%',
+        width: '100%',
+        autoPlay: true,
+        plugins: [LevelSelector],
+        events: {
+          onReady: function() {
+            var p = this.getPlugin('click_to_pause');
+            p && p.disable();
+          }
+        },
+        parentId: '#player'
+      });
+    });
+  });
+</script>
 </body>
 </html>
