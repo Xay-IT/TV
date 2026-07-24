@@ -1,0 +1,6 @@
+#EXTM3U
+
+#EXTINF:-1,Golf+
+#EXTVLCOPT:http-referrer=https://madoball.com/channel/7203
+#EXTVLCOPT:http-user-agent=Mozilla/5.0
+https://godlivetv.io/madoball/7203/playlist.m3u8
