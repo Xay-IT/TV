@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HLS Player</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+        }
+        video {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+
+<video id="video" controls autoplay></video>
+
+<script>
+const video = document.getElementById('video');
+const url = 'https://godlivetv.io/madoball/7203/playlist.m3u8';
+
+if (Hls.isSupported()) {
+    const hls = new Hls({
+        xhrSetup: function(xhr) {
+            // เบราว์เซอร์ส่วนใหญ่จะไม่ยอมให้ตั้ง Referer เอง
+            xhr.setRequestHeader("Referer", "https://madoball.com/channel/7203");
+        }
+    });
+
+    hls.loadSource(url);
+    hls.attachMedia(video);
+} else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = url;
+}
+</script>
+
+</body>
+</html>
