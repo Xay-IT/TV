@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fast Load HLS Player</title>
+    <title>Fast TS Stream Player</title>
     
-    <!-- Preconnect ช่วยให้จับการเชื่อมต่อกับ Server สตรีมมิ่งล่วงหน้าเร็วขึ้น -->
-    <link rel="preconnect" href="https://live-us1.thaimomo.com" crossorigin>
-    <link rel="dns-prefetch" href="https://live-us1.thaimomo.com">
+    <!-- Preconnect เร่งการเชื่อมต่อกับเซิร์ฟเวอร์สตรีม -->
+    <link rel="preconnect" href="http://6395online.com:8080">
+    <link rel="dns-prefetch" href="http://6395online.com:8080">
 
-    <!-- Preload HLS.js Library -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <!-- mpegts.js ไลบรารีสำหรับเล่นไฟล์ .ts ให้โหลดไว ลื่นไหล ไม่กินสเปก -->
+    <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest/dist/mpegts.min.js"></script>
 
     <style>
         * { box-sizing: border-box; }
         body {
             margin: 0;
             padding: 0;
-            background-color: #000;
+            background-color: #0d0d0d;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -28,6 +28,9 @@
             max-width: 960px;
             aspect-ratio: 16 / 9;
             background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
         }
         video {
             width: 100%;
@@ -39,77 +42,47 @@
 <body>
 
     <div class="player-container">
-        <!-- preload="auto" + muted เพื่อเปิดทางให้เบราว์เซอร์ดาวน์โหลดและเล่นไฟล์ทันที -->
-        <video id="video" controls autoplay muted playsinline preload="auto"></video>
+        <video id="videoElement" controls autoplay muted playsinline preload="auto"></video>
     </div>
 
     <script>
-        const video = document.getElementById('video');
-        const videoSrc = 'https://live-us1.thaimomo.com/live-as/chpptv-3/playlist.m3u8';
+        const videoElement = document.getElementById('videoElement');
+        const streamUrl = 'http://6395online.com:8080/live/Chandasack9066/9066/295.ts';
 
-        // ปรับแต่งตั้งค่า HLS เพื่อเน้น "ความเร็วในการโหลดครั้งแรก (Fast Start)"
-        const fastHlsConfig = {
-            enableWorker: true,              // ใช้ Background Thread ประมวลผล ไม่หน่วงหน้าเว็บ
-            startLevel: -1,                  // ให้ระบบเลือกความละเอียดเริ่มต้นตามความเร็วเน็ตอัตโนมัติ
-            capLevelToPlayerSize: true,      // ไม่โหลดความละเอียดเกินขนาดหน้าจอเครื่องเล่น
-            
-            // ปรับแต่ง Buffer สำหรับการเปิดครั้งแรกให้ไวที่สุด
-            initialLiveManifestSize: 1,      // อ่าน Manifest เพียง 1 ไฟล์ก็เริ่มเล่นได้เลย
-            maxBufferLength: 15,             // บัฟเฟอร์เริ่มต้น 15 วินาทีพอ เพื่อไม่ให้โหลดเน็ตหนักเกินไป
-            maxMaxBufferLength: 30,
-            maxBufferSize: 30 * 1000 * 1000, // จำกัดขนาดไฟล์ในแรม
-            liveSyncDurationCount: 2,        // ดึง Segment ย้อนหลังแค่ 2 อันเพื่อเล่นได้ทันที
-            liveMaxLatencyDurationCount: 5,
-            
-            // ตั้งค่าเร่งการดาวน์โหลด
-            manifestLoadingTimeOut: 5000,
-            manifestLoadingMaxRetry: 3,
-            levelLoadingTimeOut: 5000,
-            fragLoadingTimeOut: 10000
-        };
-
-        if (Hls.isSupported()) {
-            const hls = new Hls(fastHlsConfig);
-            
-            // เริ่มโหลดทันที
-            hls.loadSource(videoSrc);
-            hls.attachMedia(video);
-
-            // เมื่อแยกโครงสร้างไฟล์เสร็จ สั่งเล่นทันทีโดยไม่ต้องรอโหลดบัฟเฟอร์ก้อนใหญ่
-            hls.on(Hls.Events.MANIFEST_PARSED, function () {
-                const playPromise = video.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(() => {
-                        // ในกรณีที่เบราว์เซอร์บล็อก Autoplay ให้พร้อมเล่นต่อเมื่อผู้ใช้กด
-                        video.muted = true;
-                        video.play();
-                    });
-                }
+        if (mpegts.getFeatureList().mseLivePlayback) {
+            const player = mpegts.createPlayer({
+                type: 'mse',           // ใช้ Media Source Extensions เพื่อความลื่นไหล
+                isLive: true,          // กำหนดเป็น Live Stream
+                url: streamUrl
+            }, {
+                enableStashBuffer: false,        // ปิดการดักบัฟเฟอร์ก้อนใหญ่ เพื่อให้ภาพขึ้นไวที่สุด (Low Latency)
+                stashInitialSize: 128,           // โหลดข้อมูลแค่ 128KB แรกก็พร้อมแสดงภาพทันที
+                liveBufferLatencyChasing: true,  // ไล่ตามเฟรมล่าสุดตลอดเวลา ป้องกันภาพดีเลย์หรือสะดุด
+                enableWorker: true,              // แยกประมวลผลวิดีโอบน Background Worker ไม่ทำให้หน้าเว็บค้าง
+                lazyLoad: false
             });
 
-            // ระบบดักจับและแก้ไข Error แบบทันที ไม่ปล่อยให้หน้าจอดำค้าง
-            hls.on(Hls.Events.ERROR, function (event, data) {
-                if (data.fatal) {
-                    switch (data.type) {
-                        case Hls.ErrorTypes.NETWORK_ERROR:
-                            hls.startLoad();
-                            break;
-                        case Hls.ErrorTypes.MEDIA_ERROR:
-                            hls.recoverMediaError();
-                            break;
-                        default:
-                            hls.destroy();
-                            break;
-                    }
-                }
+            player.attachMediaElement(videoElement);
+            player.load();
+            
+            // เล่นวิดีโอทันทีที่พร้อม
+            player.play().catch(error => {
+                console.log("Autoplay blocked, user interaction needed:", error);
             });
-        } 
-        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            // สำหรับ Safari บน Mac / iOS
-            video.src = videoSrc;
-            video.addEventListener('loadedmetadata', function () {
-                video.play();
+
+            // ดักจับ Error และพยายามโหลดใหม่ให้อัตโนมัติหากสัญญาณขาดหาย
+            player.on(mpegts.Events.ERROR, (errorType, errorDetail, errorInfo) => {
+                console.warn('Stream Error occurred, attempting to reload...', errorType, errorDetail);
+                setTimeout(() => {
+                    player.unload();
+                    player.load();
+                    player.play();
+                }, 2000);
             });
+        } else {
+            // Fallback สำหรับเบราว์เซอร์ย่อยที่เล่นไฟล์ Native สตรีมได้ตรงๆ
+            videoElement.src = streamUrl;
+            videoElement.play();
         }
     </script>
 
