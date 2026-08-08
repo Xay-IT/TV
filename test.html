@@ -1,17 +1,94 @@
-<div id="hisports-player" style="width: 100%; max-width: 800px; margin: auto;">
-    <video id="videoElement" controls autoplay muted style="width: 100%; height: auto; background: #000;"></video>
-    <script src="https://cdn.jsdelivr.net/npm/mpegts.js@1.7.3/dist/mpegts.min.js"></script>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HLS Video Player</title>
+    <!-- โหลด HLS.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0f0f0f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: sans-serif;
+        }
+        .player-container {
+            width: 100%;
+            max-width: 960px;
+            aspect-ratio: 16 / 9;
+            background-color: #000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="player-container">
+        <video id="video" controls autoplay muted playsinline></video>
+    </div>
+
     <script>
-        if (mpegts.getFeatureList().mse) {
-            var videoElement = document.getElementById('videoElement');
-            var player = mpegts.createPlayer({
-                type: 'mse',
-                isLive: true,
-                url: 'http://49.0.64.96:8007/HiSports'
+        const video = document.getElementById('video');
+        const videoSrc = 'https://live-us1.thaimomo.com/live-as/chpptv-3/playlist.m3u8';
+
+        // ปรับแต่งตั้งค่า HLS เพื่อเพิ่มความลื่นไหลและลดอาการกระตุก (Buffer tuning)
+        const hlsConfig = {
+            maxBufferLength: 30,         // บัฟเฟอร์ล่วงหน้าสูงสุด 30 วินาที
+            maxMaxBufferLength: 60,      // ขีดจำกัดบัฟเฟอร์สูงสุด 60 วินาที
+            liveSyncDurationCount: 3,    // ดึงเซกเมนต์ย้อนหลัง 3 อันเพื่อความเสถียรของสตรีมสด
+            enableWorker: true,          // ใช้ Web Worker เพื่อไม่ให้กระตุกเวลาประมวลผล
+            lowLatencyMode: true         // ลดความดีเลย์ของสตรีมสด
+        };
+
+        if (Hls.isSupported()) {
+            const hls = new Hls(hlsConfig);
+            hls.loadSource(videoSrc);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                video.play().catch(error => {
+                    console.log("Autoplay prevented, user interaction needed:", error);
+                });
             });
-            player.attachMediaElement(videoElement);
-            player.load();
-            player.play();
+
+            // การจัดการ Error อัตโนมัติเพื่อช่วยให้สตรีมเล่นได้อย่างต่อเนื่อง
+            hls.on(Hls.Events.ERROR, function (event, data) {
+                if (data.fatal) {
+                    switch (data.type) {
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            console.log('Network error, trying to recover...');
+                            hls.startLoad();
+                            break;
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            console.log('Media error, trying to recover...');
+                            hls.recoverMediaError();
+                            break;
+                        default:
+                            hls.destroy();
+                            break;
+                    }
+                }
+            });
+        }
+        // รองรับ Safari/iOS ซึ่งเล่นไฟล์ HLS ผ่านระบบของตัวเองได้โดยตรง
+        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = videoSrc;
+            video.addEventListener('loadedmetadata', function () {
+                video.play();
+            });
         }
     </script>
-</div>
+
+</body>
+</html>
